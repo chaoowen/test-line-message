@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LINE 名片分享</title>
+  <!-- 載入 LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 24px; text-align: center; }
+    #shareBtn {
+      background: #06C755; color: #fff; border: none;
+      padding: 14px 28px; font-size: 16px; border-radius: 8px;
+      cursor: pointer; display: none;
+    }
+    #status { margin-top: 16px; color: #666; }
+  </style>
+</head>
+<body>
+  <h2>我的名片</h2>
+  <button id="shareBtn">分享名片給好友</button>
+  <p id="status">初始化中…</p>
+
+  <script>
+    // ⚠️ 換成你自己的 LIFF ID
+    const LIFF_ID = "2010428219-QsibpCL9";
+
+    const statusEl = document.getElementById("status");
+    const shareBtn = document.getElementById("shareBtn");
+
+    async function main() {
+      try {
+        // 1. 初始化 LIFF
+        await liff.init({ liffId: LIFF_ID });
+
+        // 2. 未登入則導向 LINE 登入
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        // 3. 確認此環境支援 shareTargetPicker
+        if (liff.isApiAvailable("shareTargetPicker")) {
+          shareBtn.style.display = "inline-block";
+          statusEl.textContent = "準備就緒，點擊按鈕分享";
+        } else {
+          statusEl.textContent = "此環境不支援分享功能，請在 LINE 中開啟";
+        }
+      } catch (err) {
+        statusEl.textContent = "初始化失敗：" + err.message;
+      }
+    }
+
+    // 4. 點擊分享 → 跳出好友選擇器
+    shareBtn.addEventListener("click", async () => {
+      try {
+        const result = await liff.shareTargetPicker(
+          [ buildFlexCard() ],
+          { isMultiple: true }   // 允許多選好友（群發）
+        );
+        if (result) {
+          statusEl.textContent = "已成功分享！";
+        } else {
+          statusEl.textContent = "已取消分享";
+        }
+      } catch (err) {
+        statusEl.textContent = "分享失敗：" + err.message;
+      }
+    });
+
+    // 5. 你的名片 Flex Message（這裡之後可改成從後台 API 取得）
+    function buildFlexCard() {
+      return {
+        type: "flex",
+        altText: "我的名片",
+        contents: {
+          type: "bubble",
+          hero: {
+            type: "image",
+            url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTOyk0fAQ4JSsu-BdRb4RLTmv-FOTch1AE70w&s",  // 換成你的圖片公開網址
+            size: "full",
+            aspectRatio: "20:13",
+            aspectMode: "cover"
+          },
+          body: {
+            type: "box", layout: "vertical", spacing: "sm",
+            contents: [
+              { type: "text", text: "王小明", size: "xl", weight: "bold", color: "#06C755" },
+              { type: "text", text: "資深顧問", size: "sm", color: "#888888" }
+            ]
+          },
+          footer: {
+            type: "box", layout: "vertical", spacing: "sm",
+            contents: [
+              {
+                type: "button", style: "primary", color: "#06C755",
+                action: { type: "uri", label: "撥打電話", uri: "tel:0912345678" }
+              },
+              {
+                type: "button", style: "primary", color: "#1D988A",
+                action: { type: "uri", label: "查看更多", uri: "https://stickershop.line-scdn.net/stickershop/v1/product/14427046/LINEStorePC/main.png?v=1" }
+              }
+            ]
+          }
+        }
+      };
+    }
+
+    main();
+  </script>
+</body>
+</html>
