@@ -28,6 +28,8 @@
     const statusEl = document.getElementById("status");
     const shareBtn = document.getElementById("shareBtn");
 
+    let userProfile = null;
+
     async function main() {
       try {
         // 1. 初始化 LIFF
@@ -39,7 +41,10 @@
           return;
         }
 
-        // 3. 確認此環境支援 shareTargetPicker
+        // 3. 取得登入者 profile
+        userProfile = await liff.getProfile();
+
+        // 4. 確認此環境支援 shareTargetPicker
         if (liff.isApiAvailable("shareTargetPicker")) {
           shareBtn.style.display = "inline-block";
           statusEl.textContent = "準備就緒，點擊按鈕分享";
@@ -55,7 +60,7 @@
     shareBtn.addEventListener("click", async () => {
       try {
         const result = await liff.shareTargetPicker(
-          [ buildFlexCard() ],
+          [ buildFlexCard(userProfile.displayName) ],
           { isMultiple: true }   // 允許多選好友（群發）
         );
         if (result) {
@@ -69,7 +74,7 @@
     });
 
     // 5. 你的名片 Flex Message（這裡之後可改成從後台 API 取得）
-    function buildFlexCard() {
+    function buildFlexCard(displayName) {
       return {
         type: "flex",
         altText: "我的名片",
@@ -85,7 +90,7 @@
           body: {
             type: "box", layout: "vertical", spacing: "sm",
             contents: [
-              { type: "text", text: "王小明", size: "xl", weight: "bold", color: "#06C755" },
+              { type: "text", text: displayName, size: "xl", weight: "bold", color: "#06C755" },
               { type: "text", text: "資深顧問", size: "sm", color: "#888888" }
             ]
           },
